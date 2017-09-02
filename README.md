@@ -21,7 +21,7 @@ config :logger,
   backends: [:console, Logger.Backends.Sentry],
   sentry: [level: :error,
            format: "$time $metadata[$level] $levelpad$message",
-           metadata: [:application, :module, :function, :file, :line, :pid]
+           metadata: [:application, :module, :function, :file, :line, :pid] # :all
           ]
 
 ```
@@ -67,4 +67,12 @@ Logger.Backends.Sentry.format
 
 ```
 Logger.Backends.Sentry.metadata
+```
+
+### set metadata
+
+```
+Logger.Backends.Sentry.metadata([])
+Logger.Backends.Sentry.metadata(:all)
+Logger.Backends.Sentry.metadata([:application, :module, :pid])
 ```

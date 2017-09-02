@@ -33,6 +33,23 @@ defmodule LoggerSentryTest do
     assert :ok == can_not_wait_for_ets(10)
   end
 
+  test "sentry metadata" do
+    assert [] == LoggerSentry.metadata
+    assert :error_metadata == LoggerSentry.metadata(:fake_meta)
+    assert :error_metadata == LoggerSentry.metadata([:fake_meta])
+    assert :ok == LoggerSentry.metadata(:all)
+    Logger.error("error_message")
+    assert :ok == LoggerSentry.metadata([:file, :line, :pid])
+    Logger.error("error_message")
+    assert :ok == LoggerSentry.metadata([])
+    assert [] == LoggerSentry.metadata
+    assert :ets.delete_all_objects(:__just_prepare_for_logger_sentry__)
+  end
+
+  test "sentry format" do
+    assert [:message] == LoggerSentry.format
+  end
+
   defp wait_for_ets(0, _), do: exit("wait_for_ets timeout")
   defp wait_for_ets(n, {level, message}) do
     case :ets.lookup(:__just_prepare_for_logger_sentry__, level) do
