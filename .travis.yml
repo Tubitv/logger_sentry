@@ -2,15 +2,11 @@ language: elixir
 
 matrix:
   include:
-    - otp_release: 18.3
-      elixir: 1.4.5
     - otp_release: 19.3
-      elixir: 1.4.5
+      elixir: 1.4.1
     - otp_release: 20.0
-      elixir: 1.4.5
+      elixir: 1.4.1
 
-    - otp_release: 18.3
-      elixir: 1.5.0
     - otp_release: 19.3
       elixir: 1.5.0
     - otp_release: 20.0
@@ -26,7 +22,9 @@ install:
   - mix deps.get
 script:
   - mix test
+  - mix coveralls.post
 env:
   - MIX_ENV=test
 before_script:
+  - ulimit -s 1082768
   - mix compile

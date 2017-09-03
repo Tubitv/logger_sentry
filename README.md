@@ -1,6 +1,7 @@
 # LoggerSentry
 
 [![Build Status](https://img.shields.io/travis/adRise/logger_sentry.svg?style=flat-square)](https://travis-ci.org/adRise/logger_sentry)
+[![Coverage Status](https://coveralls.io/repos/github/adRise/logger_sentry/badge.svg)](https://coveralls.io/github/adRise/logger_sentry)
 
 The Logger backend for Sentry.
 
