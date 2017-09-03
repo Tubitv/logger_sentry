@@ -28,7 +28,7 @@ defmodule LoggerBackends do
           {:ok, init(config, %__MODULE__{})}
         end
 
-        def log_event(output, %{level: level} = state) do
+        def log_event(level, output, state) do
           filename = :filename.join(["./logger/", Atom.to_string(level), ".log"])
           :file.write_file(filename, [output], [:append])
           state
@@ -86,7 +86,7 @@ defmodule LoggerBackends do
 
   Returning `new_state` continues the loop with new state `new_state`.
   """
-  @callback log_event(output :: bitstring, state :: any) ::
+  @callback log_event(level :: atom, output :: bitstring, state :: any) ::
   state when state: any
 
   defmacro __using__(_) do
@@ -172,7 +172,7 @@ defmodule LoggerBackends do
                        %{level: log_level} = state) do
         case meet_level?(level, log_level) do
           true ->
-            {:ok, log_event(format_event(level, msg, ts, md, state), state)}
+            {:ok, log_event(level, format_event(level, msg, ts, md, state), state)}
           _ ->
             {:ok, state}
         end

@@ -5,10 +5,10 @@ defmodule Logger.Backends.Sentry do
   It defines all callbacks of `LoggerBackends` behaviour:
 
     * init/1
-    * log_event/2
+    * log_event/3
 
   the function `init/1` will initital configure for the sentry backend, and
-  function `log_event/2` will send the output to sentry server depends on
+  function `log_event/3` will send the output to sentry server depends on
   the configure information of `sentry` application.
 
   """
@@ -21,7 +21,7 @@ defmodule Logger.Backends.Sentry do
   end
 
 if Mix.env() in [:test] do
-  def log_event(output, %{level: level} = state) do
+  def log_event(level, output, state) do
     case :ets.info(:__just_prepare_for_logger_sentry__) do
       :undefined ->
         :ignore
@@ -31,7 +31,7 @@ if Mix.env() in [:test] do
     state
   end
 else
-  def log_event(output, state) do
+  def log_event(level, output, state) do
     Sentry.capture_exception(output, [stacktrace: :erlang.get_stacktrace(),
                                       event_source: __MODULE__])
     state
