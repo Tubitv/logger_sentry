@@ -8,7 +8,10 @@ defmodule LoggerSentry.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
-     test_coverage: [tool: ExCoveralls]]
+     test_coverage: [tool: ExCoveralls],
+     description: description(),
+     package: package()
+    ]
   end
 
   def application do
@@ -20,4 +23,18 @@ defmodule LoggerSentry.Mixfile do
      {:excoveralls, "~> 0.5", only: :test},
      {:ex_doc, "~> 0.16", only: [:dev, :test]}]
   end
+
+  defp description() do
+    "The Logger backend for Sentry."
+  end
+
+  defp package() do
+    [
+      name: "logger_sentry",
+      maintainers: ["redink"],
+      licenses: ["Apache 2.0"],
+      links: %{"GitHub" => "https://github.com/adRise/logger_sentry"}
+    ]
+  end
+
 end
