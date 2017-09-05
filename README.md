@@ -14,7 +14,7 @@ The package can be installed as:
 
 ```
 def deps do
-  [{:logger_sentry, github: "redink/logger_sentry"}]
+  [{:logger_sentry, "~> 0.1.0"}]
 end
 ```
 
