@@ -31,9 +31,12 @@ if Mix.env() in [:test] do
     state
   end
 else
-  def log_event(_level, output, state) do
-    Sentry.capture_exception(output, [stacktrace: :erlang.get_stacktrace(),
-                                      event_source: __MODULE__])
+  def log_event(:error, output, state) do
+    Sentry.capture_exception(output)
+    state
+  end
+  def log_event(level, output, state) do
+    Sentry.capture_message(output, [level: Atom.to_string(level)])
     state
   end
 end
