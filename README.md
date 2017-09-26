@@ -12,7 +12,7 @@ The package can be installed as:
 
 1. Add `logger_sentry` to your `mix.exs` file
 
-```
+```elixir
 def deps do
   [{:logger_sentry, "~> 0.1.0"}]
 end
@@ -20,7 +20,7 @@ end
 
 2. Configure your config file, just like:
 
-```
+```elixir
 config :logger,
   backends: [:console, Logger.Backends.Sentry],
   sentry: [level: :error,
@@ -42,7 +42,7 @@ just like as `console` backend.
 
 Just like using Logger.
 
-```
+```elixir
 Logger.debug("this is one debug message")
 Logger.info("this is one info message")
 Logger.warn("this is one warning message")
@@ -51,31 +51,31 @@ Logger.error("this is one error message, if you set sentry logger level with `er
 
 ### get log level
 
-```
+```elixir
 Logger.Backends.Sentry.level
 ```
 
 ### set log level
 
-```
+```elixir
 Logger.Backends.Sentry.level(:error)
 ```
 
 ### get format
 
-```
+```elixir
 Logger.Backends.Sentry.format
 ```
 
 ### get metadata
 
-```
+```elixir
 Logger.Backends.Sentry.metadata
 ```
 
 ### set metadata
 
-```
+```elixir
 Logger.Backends.Sentry.metadata([])
 Logger.Backends.Sentry.metadata(:all)
 Logger.Backends.Sentry.metadata([:application, :module, :pid])
