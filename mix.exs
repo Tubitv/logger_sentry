@@ -19,7 +19,7 @@ defmodule LoggerSentry.Mixfile do
   end
 
   defp deps do
-    [{:sentry, "~> 5.0"},
+    [{:sentry, "~> 6.0"},
      {:excoveralls, "~> 0.5", only: :test},
      {:ex_doc, "~> 0.16", only: [:dev, :test]}]
   end
