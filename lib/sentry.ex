@@ -176,7 +176,7 @@ else
     Sentry.capture_exception(output, [stacktrace: Keyword.get(metadata, :stacktrace, [])])
     state
   end
-  def log_event(level, metadata, output, state) do
+  defp log_event(level, metadata, output, state) do
     Sentry.capture_message(output, [level: Atom.to_string(level),
                                     stacktrace: Keyword.get(metadata, :stacktrace, [])])
     state
