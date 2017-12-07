@@ -173,12 +173,11 @@ if Mix.env() in [:test] do
   end
 else
   defp log_event(:error, metadata, output, state) do
-    Sentry.capture_exception(output, [stacktrace: Keyword.get(metadata, :stacktrace, [])])
+    Sentry.capture_exception(output, metadata)
     state
   end
-  defp log_event(level, metadata, output, state) do
-    Sentry.capture_message(output, [level: Atom.to_string(level),
-                                    stacktrace: Keyword.get(metadata, :stacktrace, [])])
+  defp log_event(_level, metadata, output, state) do
+    Sentry.capture_message(output, metadata)
     state
   end
 end
