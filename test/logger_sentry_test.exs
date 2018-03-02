@@ -46,10 +46,6 @@ defmodule LoggerSentryTest do
     assert :ets.delete_all_objects(:__just_prepare_for_logger_sentry__)
   end
 
-  test "sentry format" do
-    assert [:message] == LoggerSentry.format
-  end
-
   defp wait_for_ets(0, _), do: exit("wait_for_ets timeout")
   defp wait_for_ets(n, {level, message}) do
     case :ets.lookup(:__just_prepare_for_logger_sentry__, level) do
