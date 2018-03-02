@@ -1,5 +1,4 @@
 defmodule Logger.Backends.Sentry do
-
   @moduledoc """
   This module is the sentry backend for Logger and it can handle the event
   message from the Logger event server and push the log message to the sentry
@@ -25,7 +24,7 @@ defmodule Logger.Backends.Sentry do
 
   @level_list [:debug, :info, :warn, :error]
   @metadata_list [:application, :module, :function, :file, :line, :pid]
-  defstruct [metadata: nil, level: nil, other_config: nil]
+  defstruct metadata: nil, level: nil, other_config: nil
 
   @doc """
   Get the backend log level.
@@ -40,6 +39,7 @@ defmodule Logger.Backends.Sentry do
   def level(level) when level in @level_list do
     :gen_event.call(Logger, __MODULE__, {:level, level})
   end
+
   def level(_), do: :error_level
 
   @doc """
@@ -55,14 +55,17 @@ defmodule Logger.Backends.Sentry do
   def metadata(:all) do
     :gen_event.call(Logger, __MODULE__, {:metadata, :all})
   end
+
   def metadata(metadata) when is_list(metadata) do
     case Enum.all?(metadata, fn i -> Enum.member?(@metadata_list, i) end) do
       true ->
         :gen_event.call(Logger, __MODULE__, {:metadata, metadata})
+
       false ->
         :error_metadata
     end
   end
+
   def metadata(_), do: :error_metadata
 
   @doc false
@@ -93,11 +96,11 @@ defmodule Logger.Backends.Sentry do
     {:ok, state}
   end
 
-  def handle_event({level, _gl, {Logger, msg, _ts, md}},
-                   %{level: log_level} = state) do
+  def handle_event({level, _gl, {Logger, msg, _ts, md}}, %{level: log_level} = state) do
     case meet_level?(level, log_level) do
       true ->
         {:ok, log_event(level, md, msg, state)}
+
       _ ->
         {:ok, state}
     end
@@ -133,31 +136,34 @@ defmodule Logger.Backends.Sentry do
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
   defp meet_level?(_lvl, nil), do: true
+
   defp meet_level?(lvl, min) do
     Logger.compare_levels(lvl, min) != :lt
   end
 
-if Mix.env() in [:test] do
-  defp log_event(level, _metadata, msg, state) do
-    case :ets.info(:__just_prepare_for_logger_sentry__) do
-      :undefined ->
-        :ignore
-      _ ->
-        :ets.insert(:__just_prepare_for_logger_sentry__, {level, msg})
-    end
-    state
-  end
-else
-  defp log_event(:error, metadata, msg, state) do
-    {output, _} = Exception.blame(:error, msg, Keyword.get(metadata, :stacktrace, []))
-    Sentry.capture_exception(output, metadata)
-    state
-  end
-  defp log_event(level, metadata, msg, state) do
-    {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
-    Sentry.capture_message(output, metadata)
-    state
-  end
-end
+  if Mix.env() in [:test] do
+    defp log_event(level, _metadata, msg, state) do
+      case :ets.info(:__just_prepare_for_logger_sentry__) do
+        :undefined ->
+          :ignore
 
+        _ ->
+          :ets.insert(:__just_prepare_for_logger_sentry__, {level, msg})
+      end
+
+      state
+    end
+  else
+    defp log_event(:error, metadata, msg, state) do
+      {output, _} = Exception.blame(:error, msg, Keyword.get(metadata, :stacktrace, []))
+      Sentry.capture_exception(output, metadata)
+      state
+    end
+
+    defp log_event(level, metadata, msg, state) do
+      {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
+      Sentry.capture_message(output, metadata)
+      state
+    end
+  end
 end
