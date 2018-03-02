@@ -155,44 +155,72 @@ defmodule Logger.Backends.Sentry do
     end
   else
     defp log_event(:error, metadata, msg, state) do
-      Sentry.capture_exception(generate_output(:error, metadata, msg), [
-        {:extra, generate_extra(metadata, msg)} | metadata
-      ])
+      Sentry.capture_exception(
+        generate_output(:error, metadata, msg),
+        generate_opts(metadata, msg)
+      )
 
       state
     end
 
     defp log_event(level, metadata, msg, state) do
-      Sentry.capture_message(generate_output(level, metadata, msg), [
-        {:extra, generate_extra(metadata, msg)} | metadata
-      ])
-
+      Sentry.capture_message(generate_output(level, metadata, msg), generate_opts(metadata, msg))
       state
     end
-  end
 
-  defp generate_output(level, metadata, msg) do
-    case Keyword.get(metadata, :exception) do
-      nil ->
-        {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
-        output
+    defp generate_output(level, metadata, msg) do
+      msg = :erlang.iolist_to_binary(msg)
 
-      exception ->
-        exception
+      case Keyword.get(metadata, :exception) do
+        nil ->
+          {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
+          output
+
+        exception ->
+          exception
+      end
+    end
+
+    defp generate_opts(metadata, msg) do
+      case custom_fingerprints(metadata, msg) do
+        nil ->
+          [{:extra, generate_extra(metadata, msg)} | metadata]
+
+        fingerprint ->
+          case Keyword.get(metadata, :fingerprint) do
+            nil ->
+              [{:extra, generate_extra(metadata, msg)}, {:fingerprint, fingerprint} | metadata]
+
+            old_fingerprint ->
+              [{:extra, generate_extra(metadata, msg)} | metadata]
+              |> Keyword.put(:fingerprint, old_fingerprint ++ fingerprint)
+          end
+      end
+    end
+
+    defp generate_extra(metadata, msg) do
+      %{
+        application: Keyword.get(metadata, :application),
+        module: Keyword.get(metadata, :module),
+        function: Keyword.get(metadata, :function),
+        file: Keyword.get(metadata, :file),
+        line: Keyword.get(metadata, :line),
+        log_message: :erlang.iolist_to_binary(msg)
+      }
+      |> Enum.reject(fn {_, v} -> is_nil(v) end)
+      |> Map.new()
+      |> Map.merge(Keyword.get(metadata, :extra, %{}))
+    end
+
+    defp custom_fingerprints(metadata, msg) do
+      fingerprints_mod =
+        Application.get_env(:logger_sentry, :fingerprints_mod, LoggerSentry.Fingerprints)
+
+      fingerprints_mod.custom_fingerprints(metadata, msg)
     end
   end
+end
 
-  defp generate_extra(metadata, msg) do
-    %{
-      application: Keyword.get(metadata, :application),
-      module: Keyword.get(metadata, :module),
-      function: Keyword.get(metadata, :function),
-      file: Keyword.get(metadata, :file),
-      line: Keyword.get(metadata, :line),
-      log_message: msg
-    }
-    |> Enum.reject(fn {_, v} -> is_nil(v) end)
-    |> Map.new()
-    |> Map.merge(Keyword.get(metadata, :extra, %{}))
-  end
+defmodule LoggerSentry.Fingerprints do
+  def custom_fingerprints(_metadata, _msg), do: nil
 end
