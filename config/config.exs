@@ -2,9 +2,7 @@ use Mix.Config
 
 config :logger,
   backends: [:console, Logger.Backends.Sentry],
-  sentry: [format: "$message",
-           metadata: []
-          ]
+  sentry: [metadata: []]
 
 config :sentry,
   dsn: "your dsn",
