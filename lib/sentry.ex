@@ -155,25 +155,41 @@ defmodule Logger.Backends.Sentry do
     end
   else
     defp log_event(:error, metadata, msg, state) do
-      {output, _} = Exception.blame(:error, msg, Keyword.get(metadata, :stacktrace, []))
-      Sentry.capture_exception(output, [{:extra, generate_extra(metadata)} | metadata])
+      Sentry.capture_exception(generate_output(:error, metadata, msg), [
+        {:extra, generate_extra(metadata, msg)} | metadata
+      ])
+
       state
     end
 
     defp log_event(level, metadata, msg, state) do
-      {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
-      Sentry.capture_message(output, [{:extra, generate_extra(metadata)} | metadata])
+      Sentry.capture_message(generate_output(level, metadata, msg), [
+        {:extra, generate_extra(metadata, msg)} | metadata
+      ])
+
       state
     end
   end
 
-  defp generate_extra(metadata) do
+  defp generate_output(level, metadata, msg) do
+    case Keyword.get(metadata, :exception) do
+      nil ->
+        {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
+        output
+
+      exception ->
+        exception
+    end
+  end
+
+  defp generate_extra(metadata, msg) do
     %{
       application: Keyword.get(metadata, :application),
       module: Keyword.get(metadata, :module),
       function: Keyword.get(metadata, :function),
       file: Keyword.get(metadata, :file),
-      line: Keyword.get(metadata, :line)
+      line: Keyword.get(metadata, :line),
+      log_message: msg
     }
     |> Enum.reject(fn {_, v} -> is_nil(v) end)
     |> Map.new()
