@@ -24,7 +24,6 @@ end
 config :logger,
   backends: [:console, Logger.Backends.Sentry],
   sentry: [level: :error,
-           format: "$time $metadata[$level] $levelpad$message",
            metadata: [:application, :module, :function, :file, :line, :pid] # :all
           ]
 
@@ -33,7 +32,6 @@ config :logger,
 If you want keep `console` backend in Logger event server, you should set `backends` with `[:console, Logger.Backends.Sentry]`. And sentry backend just support three options:
 
 - level
-- format
 - metadata
 
 just like as `console` backend.
@@ -59,12 +57,6 @@ Logger.Backends.Sentry.level
 
 ```elixir
 Logger.Backends.Sentry.level(:error)
-```
-
-### get format
-
-```elixir
-Logger.Backends.Sentry.format
 ```
 
 ### get metadata

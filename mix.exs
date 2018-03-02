@@ -2,15 +2,16 @@ defmodule LoggerSentry.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :logger_sentry,
-     version: "0.1.3",
-     elixir: "~> 1.4",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps(),
-     test_coverage: [tool: ExCoveralls],
-     description: description(),
-     package: package()
+    [
+      app: :logger_sentry,
+      version: "0.1.3",
+      elixir: "~> 1.4",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      description: description(),
+      package: package()
     ]
   end
 
@@ -19,9 +20,11 @@ defmodule LoggerSentry.Mixfile do
   end
 
   defp deps do
-    [{:sentry, "~> 6.0"},
-     {:excoveralls, "~> 0.7", only: :test},
-     {:ex_doc, "~> 0.16", only: [:dev, :test]}]
+    [
+      {:sentry, "~> 6.0"},
+      {:excoveralls, "~> 0.7", only: :test},
+      {:ex_doc, "~> 0.16", only: [:dev, :test]}
+    ]
   end
 
   defp description() do
@@ -36,5 +39,4 @@ defmodule LoggerSentry.Mixfile do
       links: %{"GitHub" => "https://github.com/adRise/logger_sentry"}
     ]
   end
-
 end
