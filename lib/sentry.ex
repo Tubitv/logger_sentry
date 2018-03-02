@@ -177,5 +177,6 @@ defmodule Logger.Backends.Sentry do
     }
     |> Enum.reject(fn {_, v} -> is_nil(v) end)
     |> Map.new()
+    |> Map.merge(Keyword.get(metadata, :extra, %{}))
   end
 end
