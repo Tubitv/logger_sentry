@@ -20,7 +20,6 @@ install:
   - mix deps.get
 script:
   - mix test
-  - mix coveralls.post
 env:
   - MIX_ENV=test
 before_script:
