@@ -36,7 +36,7 @@ defmodule LoggerSentry.Mixfile do
       name: "logger_sentry",
       maintainers: ["redink"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/adRise/logger_sentry"}
+      links: %{"GitHub" => "https://github.com/Tubitv/logger_sentry"}
     ]
   end
 end
