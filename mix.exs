@@ -4,8 +4,8 @@ defmodule LoggerSentry.Mixfile do
   def project do
     [
       app: :logger_sentry,
-      version: "0.1.6",
-      elixir: "~> 1.4",
+      version: "0.2.0",
+      elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -21,9 +21,9 @@ defmodule LoggerSentry.Mixfile do
 
   defp deps do
     [
-      {:sentry, "~> 6.4"},
+      {:sentry, "~> 7.0"},
       {:excoveralls, "~> 0.10", only: :test},
-      {:ex_doc, "~> 0.16", only: [:dev, :test]}
+      {:ex_doc, "~> 0.19", only: [:dev, :test]}
     ]
   end
 
