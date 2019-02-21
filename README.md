@@ -72,3 +72,7 @@ Logger.Backends.Sentry.metadata([])
 Logger.Backends.Sentry.metadata(:all)
 Logger.Backends.Sentry.metadata([:application, :module, :pid])
 ```
+
+## Example
+
+[use example](https://github.com/Tubitv/logger_sentry/wiki/Use-example)
