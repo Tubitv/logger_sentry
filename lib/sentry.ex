@@ -125,6 +125,14 @@ defmodule Logger.Backends.Sentry do
     :ok
   end
 
+  defp mask_pid(["Process ", _, "raised an exception" | tail]) do
+    ["A process raised an exception" | tail]
+  end
+
+  defp mask_pid(msg) do
+    msg
+  end
+
   # private functions
   defp init(config, state) do
     level = Keyword.get(config, :level, :info)
@@ -164,12 +172,15 @@ defmodule Logger.Backends.Sentry do
     end
 
     defp log_event(level, metadata, msg, state) do
-      Sentry.capture_message(generate_output(level, metadata, msg), generate_opts(metadata, msg))
+      Sentry.capture_message(
+        generate_output(level, metadata, msg),
+        generate_opts(metadata, msg)
+      )
       state
     end
 
     defp generate_output(level, metadata, msg) do
-      msg = :erlang.iolist_to_binary(msg)
+      msg = :erlang.iolist_to_binary(mask_pid(msg))
 
       case Keyword.get(metadata, :exception) do
         nil ->
