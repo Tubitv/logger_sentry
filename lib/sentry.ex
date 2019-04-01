@@ -106,6 +106,10 @@ defmodule Logger.Backends.Sentry do
     end
   end
 
+  def handle_event(:flush, state) do
+    {:ok, state}
+  end
+
   def handle_event(_, state) do
     {:ok, state}
   end
@@ -123,14 +127,6 @@ defmodule Logger.Backends.Sentry do
   @doc false
   def terminate(_reason, _state) do
     :ok
-  end
-
-  defp mask_pid(["Process ", _, "raised an exception" | tail]) do
-    ["A process raised an exception" | tail]
-  end
-
-  defp mask_pid(msg) do
-    msg
   end
 
   # private functions
@@ -163,11 +159,7 @@ defmodule Logger.Backends.Sentry do
     end
   else
     defp log_event(:error, metadata, msg, state) do
-      Sentry.capture_exception(
-        generate_output(:error, metadata, msg),
-        generate_opts(metadata, msg)
-      )
-
+      log_exception(metadata, msg)
       state
     end
 
@@ -176,11 +168,31 @@ defmodule Logger.Backends.Sentry do
         generate_output(level, metadata, msg),
         generate_opts(metadata, msg)
       )
+
       state
     end
 
+    defp log_exception(metadata, msg) do
+      case resolve_exception(metadata) do
+        nil ->
+          :ok
+
+        {exception, stacktrace} ->
+          opts =
+            metadata
+            |> generate_opts(msg)
+            |> Keyword.put(:stacktrace, stacktrace)
+            |> Enum.reject(fn {_, v} -> is_nil(v) end)
+
+          Sentry.capture_exception(
+            exception,
+            opts
+          )
+      end
+    end
+
     defp generate_output(level, metadata, msg) do
-      msg = :erlang.iolist_to_binary(mask_pid(msg))
+      msg = :erlang.iolist_to_binary(msg)
 
       case Keyword.get(metadata, :exception) do
         nil ->
@@ -193,19 +205,37 @@ defmodule Logger.Backends.Sentry do
     end
 
     defp generate_opts(metadata, msg) do
-      case custom_fingerprints(metadata, msg) do
-        nil ->
-          [{:extra, generate_extra(metadata, msg)} | metadata]
+      fingerprint = generate_fingerprint(metadata, msg)
+      extra_meta = generate_extra(metadata, msg)
 
-        fingerprint ->
-          case Keyword.get(metadata, :fingerprint) do
-            nil ->
-              [{:extra, generate_extra(metadata, msg)}, {:fingerprint, fingerprint} | metadata]
+      metadata
+      |> Keyword.put(:extra, extra_meta)
+      |> Keyword.put(:fingerprint, fingerprint)
+    end
 
-            old_fingerprint ->
-              [{:extra, generate_extra(metadata, msg)} | metadata]
-              |> Keyword.put(:fingerprint, old_fingerprint ++ fingerprint)
-          end
+    defp generate_fingerprint(metadata, msg) do
+      from_conf = custom_fingerprints(metadata, msg) || []
+      from_meta = Keyword.get(metadata, :fingerprint, [])
+
+      case from_meta ++ from_conf do
+        [] -> nil
+        fingerprint -> fingerprint
+      end
+    end
+
+    defp resolve_exception(metadata) do
+      case Keyword.get(metadata, :crash_reason) do
+        {:nocatch, _term} ->
+          {:nocatch, nil}
+
+        {reason, stacktrace} ->
+          {reason, stacktrace}
+
+        reason when is_atom(reason) and not is_nil(reason) ->
+          {reason, nil}
+
+        _ ->
+          nil
       end
     end
 
