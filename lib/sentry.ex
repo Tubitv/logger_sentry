@@ -177,7 +177,7 @@ defmodule Logger.Backends.Sentry do
         nil ->
           # non-exception log messages with level == :error
           Sentry.capture_exception(
-            generate_output(level, metadata, msg),
+            generate_output(:error, metadata, msg),
             generate_opts(metadata, msg)
           )
 
