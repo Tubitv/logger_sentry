@@ -26,11 +26,16 @@ defmodule LoggerSentryTest do
     assert :ok == wait_for_ets(10, {:info, "info_message"})
     Logger.error("error_message")
     assert :ok == wait_for_ets(10, {:error, "error_message"})
+
     assert :ok == LoggerSentry.level(:error)
     Logger.error("error_message")
     assert :ok == wait_for_ets(10, {:error, "error_message"})
     Logger.info("info_message")
     assert :ok == can_not_wait_for_ets(10)
+
+    assert :ok == LoggerSentry.level(:warn)
+    Logger.warn("warn_message")
+    assert :ok == wait_for_ets(10, {:warn, "warn_message"})
   end
 
   test "sentry metadata" do
