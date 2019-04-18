@@ -141,6 +141,9 @@ defmodule Logger.Backends.Sentry do
     Logger.compare_levels(lvl, min) != :lt
   end
 
+  defp normalize_level(:warn), do: "warning"
+  defp normalize_level(level), do: to_string(level)
+
   if Mix.env() in [:test] do
     defp log_event(level, _metadata, msg, state) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
@@ -164,7 +167,7 @@ defmodule Logger.Backends.Sentry do
     end
 
     defp log_event(level, metadata0, msg, state) do
-      metadata = [{:level, to_string(level)} | metadata0]
+      metadata = [{:level, normalize_level(level)} | metadata0]
       Sentry.capture_message(generate_output(level, metadata0, msg), generate_opts(metadata, msg))
       state
     end
