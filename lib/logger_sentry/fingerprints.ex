@@ -36,20 +36,12 @@ defmodule LoggerSentry.Fingerprints do
     "(EXIT) time out"
   end
 
-  # db connection
-  defp convert_error("** (exit) %DBConnection.ConnectionError" <> _) do
-    "(exit) DBConnection ConnectionError"
-  end
-
-  defp convert_error("** (DBConnection.ConnectionError)" <> _) do
-    "(exit) DBConnection ConnectionError"
-  end
-
   # fallback
   defp convert_error(error) do
     cond do
-      String.contains?(error, "** (DBConnection.ConnectionError)") ->
-        "(exit) DBConnection ConnectionError"
+      # db_connection application
+      String.contains?(error, "(DBConnection.ConnectionError)") ->
+        "DBConnection ConnectionError"
 
       true ->
         nil
