@@ -217,14 +217,16 @@ defmodule Logger.Backends.Sentry do
     end
 
     defp custom_fingerprints(metadata, msg) do
-      fingerprints_mod =
-        Application.get_env(:logger_sentry, :fingerprints_mod, LoggerSentry.Fingerprints)
+      custom_fingerprints =
+        case Application.get_env(:logger_sentry, :fingerprints_mod) do
+          nil -> []
+          fingerprints_mod -> fingerprints_mod.custom_fingerprints(metadata, msg) || []
+        end
 
-      fingerprints_mod.custom_fingerprints(metadata, msg)
+      case LoggerSentry.Fingerprints.fingerprints(metadata, msg) ++ custom_fingerprints do
+        [] -> nil
+        tmp_list -> tmp_list
+      end
     end
   end
-end
-
-defmodule LoggerSentry.Fingerprints do
-  def custom_fingerprints(_metadata, _msg), do: nil
 end
