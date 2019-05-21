@@ -217,15 +217,21 @@ defmodule Logger.Backends.Sentry do
     end
 
     defp custom_fingerprints(metadata, msg) do
+      default_fingerprints =
+        case Application.get_env(:logger_sentry, :enable_default_fingerprints) do
+          true -> LoggerSentry.Fingerprints.fingerprints(metadata, msg)
+          _ -> []
+        end
+
       custom_fingerprints =
         case Application.get_env(:logger_sentry, :fingerprints_mod) do
           nil -> []
           fingerprints_mod -> fingerprints_mod.custom_fingerprints(metadata, msg) || []
         end
 
-      case LoggerSentry.Fingerprints.fingerprints(metadata, msg) ++ custom_fingerprints do
+      case default_fingerprints ++ custom_fingerprints do
         [] -> nil
-        tmp_list -> tmp_list
+        tmp_list -> Enum.uniq(tmp_list)
       end
     end
   end
