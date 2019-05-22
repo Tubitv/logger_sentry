@@ -219,7 +219,7 @@ defmodule Logger.Backends.Sentry do
     defp custom_fingerprints(metadata, msg) do
       default_fingerprints =
         case Application.get_env(:logger_sentry, :enable_default_fingerprints) do
-          true -> LoggerSentry.Fingerprints.fingerprints(metadata, msg)
+          true -> LoggerSentry.Fingerprint.fingerprints(metadata, msg)
           _ -> []
         end
 
