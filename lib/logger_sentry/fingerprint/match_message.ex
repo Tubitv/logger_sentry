@@ -35,6 +35,10 @@ defmodule LoggerSentry.Fingerprint.MatchMessage do
     "(EXIT) time out"
   end
 
+  defp convert_error("** (exit) bad return value" <> _) do
+    "(exit) bad return value"
+  end
+
   # message will be like:
   # ["Children ", inspect(id), " of Supervisor ", sup_name(sup), ?\s, sup_context(context)]
   # from elixir module `Logger.Translator`

@@ -72,6 +72,17 @@ Logger.Backends.Sentry.metadata(:all)
 Logger.Backends.Sentry.metadata([:application, :module, :pid])
 ```
 
+## default fingerprints
+
+For use fingerprints in sentry dashboard easily, `logger_sentry` support default fingerprints for now. Now only support match error message, if you want to use default fingerprints, you can set the `enable_default_fingerprints` option true:
+
+```elixir
+config :logger_sentry,
+  enable_default_fingerprints: true
+```
+
+meanwhile, welcome contribute more common fingerprints, error message matching or other approaches.
+
 ## Example
 
 [use example](https://github.com/Tubitv/logger_sentry/wiki/Use-example)
