@@ -125,22 +125,27 @@ defmodule Logger.Backends.Sentry do
     :ok
   end
 
-  # private functions
+  @doc false
   defp init(config, state) do
-    level = Keyword.get(config, :level, :info)
-    metadata = Keyword.get(config, :metadata, []) |> configure_metadata()
-    %{state | metadata: metadata, level: level}
+    metadata =
+      config
+      |> Keyword.get(:metadata, [])
+      |> configure_metadata()
+
+    state
+    |> Keyword.put(:metadata, metadata)
+    |> Keyword.put(:level, Keyword.get(config, :level, :info))
   end
 
+  @doc false
   defp configure_metadata(:all), do: :all
   defp configure_metadata(metadata), do: Enum.reverse(metadata)
 
+  @doc false
   defp meet_level?(_lvl, nil), do: true
+  defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
 
-  defp meet_level?(lvl, min) do
-    Logger.compare_levels(lvl, min) != :lt
-  end
-
+  @doc false
   defp normalize_level(:warn), do: "warning"
   defp normalize_level(level), do: to_string(level)
 
@@ -159,8 +164,8 @@ defmodule Logger.Backends.Sentry do
   else
     defp log_event(:error, metadata, msg, state) do
       Sentry.capture_exception(
-        generate_output(:error, metadata, msg),
-        generate_opts(metadata, msg)
+        LoggerSentry.Sentry.generate_output(:error, metadata, msg),
+        LoggerSentry.Sentry.generate_opts(metadata, msg)
       )
 
       state
@@ -168,71 +173,15 @@ defmodule Logger.Backends.Sentry do
 
     defp log_event(level, metadata0, msg, state) do
       metadata = [{:level, normalize_level(level)} | metadata0]
-      Sentry.capture_message(generate_output(level, metadata0, msg), generate_opts(metadata, msg))
+
+      Sentry.capture_message(
+        LoggerSentry.Sentry.generate_output(level, metadata0, msg),
+        LoggerSentry.Sentry.generate_opts(metadata, msg)
+      )
+
       state
     end
-
-    defp generate_output(level, metadata, msg) do
-      msg = :erlang.iolist_to_binary(msg)
-
-      case Keyword.get(metadata, :exception) do
-        nil ->
-          {output, _} = Exception.blame(level, msg, Keyword.get(metadata, :stacktrace, []))
-          output
-
-        exception ->
-          exception
-      end
-    end
-
-    defp generate_opts(metadata, msg) do
-      case custom_fingerprints(metadata, msg) do
-        nil ->
-          [{:extra, generate_extra(metadata, msg)} | metadata]
-
-        fingerprint ->
-          case Keyword.get(metadata, :fingerprint) do
-            nil ->
-              [{:extra, generate_extra(metadata, msg)}, {:fingerprint, fingerprint} | metadata]
-
-            old_fingerprint ->
-              [{:extra, generate_extra(metadata, msg)} | metadata]
-              |> Keyword.put(:fingerprint, old_fingerprint ++ fingerprint)
-          end
-      end
-    end
-
-    defp generate_extra(metadata, msg) do
-      %{
-        application: Keyword.get(metadata, :application),
-        module: Keyword.get(metadata, :module),
-        function: Keyword.get(metadata, :function),
-        file: Keyword.get(metadata, :file),
-        line: Keyword.get(metadata, :line),
-        log_message: :erlang.iolist_to_binary(msg)
-      }
-      |> Enum.reject(fn {_, v} -> is_nil(v) end)
-      |> Map.new()
-      |> Map.merge(Keyword.get(metadata, :extra, %{}))
-    end
-
-    defp custom_fingerprints(metadata, msg) do
-      default_fingerprints =
-        case Application.get_env(:logger_sentry, :enable_default_fingerprints) do
-          true -> LoggerSentry.Fingerprint.fingerprints(metadata, msg)
-          _ -> []
-        end
-
-      custom_fingerprints =
-        case Application.get_env(:logger_sentry, :fingerprints_mod) do
-          nil -> []
-          fingerprints_mod -> fingerprints_mod.custom_fingerprints(metadata, msg) || []
-        end
-
-      case default_fingerprints ++ custom_fingerprints do
-        [] -> nil
-        tmp_list -> Enum.uniq(tmp_list)
-      end
-    end
   end
+
+  # __end_of_module__
 end
