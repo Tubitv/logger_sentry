@@ -1,6 +1,9 @@
 defmodule LoggerSentryTest do
   use ExUnit.Case
+
+  alias LoggerSentry.Sentry
   alias Logger.Backends.Sentry, as: LoggerSentry
+
   require Logger
 
   test "sentry backend level" do
@@ -49,6 +52,38 @@ defmodule LoggerSentryTest do
     assert :ok == LoggerSentry.metadata([])
     assert [] == LoggerSentry.metadata()
     assert :ets.delete_all_objects(:__just_prepare_for_logger_sentry__)
+  end
+
+  test "generate sentry output with exception" do
+    assert %RuntimeError{message: "runtime error"} ==
+             Sentry.generate_output(:error, [exception: %RuntimeError{}], "error info")
+  end
+
+  test "generate sentry output without exception" do
+    assert %ErlangError{original: "somethine error"} ==
+             Sentry.generate_output(:error, [], "somethine error")
+  end
+
+  test "generate sentry options empty" do
+    assert [extra: %{log_message: "error info"}] == Sentry.generate_opts([], "error info")
+  end
+
+  test "generate sentry options extra from metadata extra" do
+    assert [extra: %{version: "0.1.1", log_message: "error info"}] ==
+             Sentry.generate_opts([extra: %{version: "0.1.1"}], "error info")
+  end
+
+  test "generate sentry options extra" do
+    assert [
+             extra: %{application: Application, log_message: "error info", module: ModA},
+             application: Application,
+             module: ModA
+           ] == Sentry.generate_opts([application: Application, module: ModA], "error info")
+  end
+
+  test "generate sentry options with self fingerprint" do
+    assert [[fingerprint: ["self fingerprint"], extra: %{log_message: "error info"}]] ==
+      Sentry.generate_opts([fingerprint: ["self fingerprint"]], "error info")
   end
 
   defp wait_for_ets(0, _), do: exit("wait_for_ets timeout")

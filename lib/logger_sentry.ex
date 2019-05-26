@@ -133,8 +133,8 @@ defmodule Logger.Backends.Sentry do
       |> configure_metadata()
 
     state
-    |> Keyword.put(:metadata, metadata)
-    |> Keyword.put(:level, Keyword.get(config, :level, :info))
+    |> Map.put(:metadata, metadata)
+    |> Map.put(:level, Keyword.get(config, :level, :info))
   end
 
   @doc false
@@ -144,10 +144,6 @@ defmodule Logger.Backends.Sentry do
   @doc false
   defp meet_level?(_lvl, nil), do: true
   defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
-
-  @doc false
-  defp normalize_level(:warn), do: "warning"
-  defp normalize_level(level), do: to_string(level)
 
   if Mix.env() in [:test] do
     defp log_event(level, _metadata, msg, state) do
@@ -162,6 +158,10 @@ defmodule Logger.Backends.Sentry do
       state
     end
   else
+    @doc false
+    defp normalize_level(:warn), do: "warning"
+    defp normalize_level(level), do: to_string(level)
+
     defp log_event(:error, metadata, msg, state) do
       Sentry.capture_exception(
         LoggerSentry.Sentry.generate_output(:error, metadata, msg),

@@ -13,7 +13,7 @@ defmodule LoggerSentry.Sentry do
         {output, _} =
           Exception.blame(
             level,
-            :erlang.iolist_to_binary(msg),
+            :erlang.iolist_to_binary(message),
             Keyword.get(metadata, :stacktrace, [])
           )
 
@@ -48,7 +48,7 @@ defmodule LoggerSentry.Sentry do
     |> Map.new()
     |> Map.merge(Keyword.get(metadata, :extra, %{}))
     |> case do
-      %{} -> metadata
+      empty when empty == %{} -> metadata
       other -> Keyword.put(metadata, :extra, other)
     end
   end
