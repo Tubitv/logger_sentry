@@ -82,8 +82,8 @@ defmodule LoggerSentryTest do
   end
 
   test "generate sentry options with self fingerprint" do
-    assert [[fingerprint: ["self fingerprint"], extra: %{log_message: "error info"}]] ==
-      Sentry.generate_opts([fingerprint: ["self fingerprint"]], "error info")
+    assert [{:fingerprint, ["self fingerprint"]}, {:extra, %{log_message: "error info"}}] ==
+             Sentry.generate_opts([fingerprint: ["self fingerprint"]], "error info")
   end
 
   defp wait_for_ets(0, _), do: exit("wait_for_ets timeout")
