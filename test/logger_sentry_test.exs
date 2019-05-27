@@ -55,13 +55,22 @@ defmodule LoggerSentryTest do
   end
 
   test "generate sentry output with exception" do
-    assert %RuntimeError{message: "runtime error"} ==
+    assert {%RuntimeError{message: "runtime error"}, [exception: %RuntimeError{}]} ==
              Sentry.generate_output(:error, [exception: %RuntimeError{}], "error info")
   end
 
-  test "generate sentry output without exception" do
-    assert %ErlangError{original: "somethine error"} ==
+  test "generate sentry output without exception and without crash_reason" do
+    assert {%ErlangError{original: "somethine error"}, []} ==
              Sentry.generate_output(:error, [], "somethine error")
+  end
+
+  test "generate sentry output without exception but with crash_reason" do
+    stacktrace = [{:ets, :lookup, [A, :a], []}]
+    crash_reason = {%ArgumentError{message: "argument error"}, stacktrace}
+
+    assert {%ArgumentError{message: "argument error"},
+            [stacktrace: stacktrace, crash_reason: crash_reason]} ==
+             Sentry.generate_output(:error, [crash_reason: crash_reason], "")
   end
 
   test "generate sentry options empty" do

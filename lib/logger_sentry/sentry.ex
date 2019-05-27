@@ -6,8 +6,16 @@ defmodule LoggerSentry.Sentry do
   @doc """
   Generate output.
   """
-  @spec generate_output(atom, Keyword.t(), list()) :: Exception.t()
+  @spec generate_output(atom, Keyword.t(), list()) :: {Exception.t(), Keyword.t()}
   def generate_output(level, metadata, message) do
+    case Keyword.get(metadata, :crash_reason) do
+      {reason, stacktrace} -> {reason, Keyword.put(metadata, :stacktrace, stacktrace)}
+      _ -> generate_output_without_crash_reason(level, metadata, message)
+    end
+  end
+
+  @doc false
+  defp generate_output_without_crash_reason(level, metadata, message) do
     case Keyword.get(metadata, :exception) do
       nil ->
         {output, _} =
@@ -17,10 +25,10 @@ defmodule LoggerSentry.Sentry do
             Keyword.get(metadata, :stacktrace, [])
           )
 
-        output
+        {output, metadata}
 
       exception ->
-        exception
+        {exception, metadata}
     end
   end
 

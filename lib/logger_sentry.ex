@@ -58,11 +58,8 @@ defmodule Logger.Backends.Sentry do
 
   def metadata(metadata) when is_list(metadata) do
     case Enum.all?(metadata, fn i -> Enum.member?(@metadata_list, i) end) do
-      true ->
-        :gen_event.call(Logger, __MODULE__, {:metadata, metadata})
-
-      false ->
-        :error_metadata
+      true -> :gen_event.call(Logger, __MODULE__, {:metadata, metadata})
+      false -> :error_metadata
     end
   end
 
@@ -98,11 +95,8 @@ defmodule Logger.Backends.Sentry do
 
   def handle_event({level, _gl, {Logger, msg, _ts, md}}, %{level: log_level} = state) do
     case meet_level?(level, log_level) do
-      true ->
-        {:ok, log_event(level, md, msg, state)}
-
-      _ ->
-        {:ok, state}
+      true -> {:ok, log_event(level, md, msg, state)}
+      _ -> {:ok, state}
     end
   end
 
@@ -148,11 +142,8 @@ defmodule Logger.Backends.Sentry do
   if Mix.env() in [:test] do
     defp log_event(level, _metadata, msg, state) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
-        :undefined ->
-          :ignore
-
-        _ ->
-          :ets.insert(:__just_prepare_for_logger_sentry__, {level, msg})
+        :undefined -> :ignore
+        _ -> :ets.insert(:__just_prepare_for_logger_sentry__, {level, msg})
       end
 
       state
@@ -163,22 +154,15 @@ defmodule Logger.Backends.Sentry do
     defp normalize_level(level), do: to_string(level)
 
     defp log_event(:error, metadata, msg, state) do
-      Sentry.capture_exception(
-        LoggerSentry.Sentry.generate_output(:error, metadata, msg),
-        LoggerSentry.Sentry.generate_opts(metadata, msg)
-      )
-
+      {output, metadata} = LoggerSentry.Sentry.generate_output(:error, metadata, msg)
+      Sentry.capture_exception(output, LoggerSentry.Sentry.generate_opts(metadata, msg))
       state
     end
 
     defp log_event(level, metadata0, msg, state) do
       metadata = [{:level, normalize_level(level)} | metadata0]
-
-      Sentry.capture_message(
-        LoggerSentry.Sentry.generate_output(level, metadata0, msg),
-        LoggerSentry.Sentry.generate_opts(metadata, msg)
-      )
-
+      {output, metadata} = LoggerSentry.Sentry.generate_output(level, metadata0, msg)
+      Sentry.capture_message(output, LoggerSentry.Sentry.generate_opts(metadata, msg))
       state
     end
   end
