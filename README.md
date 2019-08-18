@@ -72,16 +72,20 @@ Logger.Backends.Sentry.metadata(:all)
 Logger.Backends.Sentry.metadata([:application, :module, :pid])
 ```
 
-## default fingerprints
+## fingerprints
 
-For use fingerprints in sentry dashboard easily, `logger_sentry` support default fingerprints for now. Now only support match error message, if you want to use default fingerprints, you can set the `enable_default_fingerprints` option true:
+For use fingerprints in sentry dashboard easily, `logger_sentry` support option to define generate fingerprints modules.
+Now only support match error message and code location, and you can also self-define module to generate the fingerprints, just need define `fingerprints/2` function in your self-define module.
+And you need set the option for `logger_sentry` application, just like:
 
 ```elixir
 config :logger_sentry,
-  enable_default_fingerprints: true
+  fingerprints_mods: [
+    LoggerSentry.Fingerprint.MatchMessage, # [code source](./lib/logger_sentry/fingerprint/match_message.ex)
+    LoggerSentry.Fingerprint.CodeLocation, # [code source](./lib/logger_sentry/fingerprint/code_location.ex)
+    Self.Define.Module
+  ]
 ```
-
-meanwhile, welcome contribute more common fingerprints, error message matching or other approaches.
 
 ## Example
 
