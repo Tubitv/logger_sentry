@@ -1,5 +1,8 @@
 use Mix.Config
 
+config :logger_sentry,
+  fingerprints_mods: [LoggerSentry.Fingerprint.MatchMessage]
+
 config :logger,
   backends: [:console, Logger.Backends.Sentry],
   sentry: [metadata: []]

@@ -71,21 +71,13 @@ defmodule LoggerSentry.Sentry do
 
   @doc false
   defp generate_fingerprints(metadata, msg) do
-    default_fingerprints =
-      case Application.get_env(:logger_sentry, :enable_default_fingerprints) do
-        true -> LoggerSentry.Fingerprint.fingerprints(metadata, msg)
-        _ -> []
-      end
-
-    custom_fingerprints =
-      case Application.get_env(:logger_sentry, :fingerprints_mod) do
-        nil -> []
-        fingerprints_mod -> fingerprints_mod.custom_fingerprints(metadata, msg) || []
-      end
-
-    case default_fingerprints ++ custom_fingerprints ++ Keyword.get(metadata, :fingerprint, []) do
+    :logger_sentry
+    |> Application.get_env(:fingerprints_mods, [])
+    |> LoggerSentry.Fingerprint.fingerprints(metadata, msg)
+    |> Kernel.++(Keyword.get(metadata, :fingerprint, []))
+    |> case do
       [] -> []
-      tmp_list -> Enum.uniq(tmp_list)
+      tmp -> Enum.uniq(tmp)
     end
   end
 

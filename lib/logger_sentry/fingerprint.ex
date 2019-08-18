@@ -3,13 +3,12 @@ defmodule LoggerSentry.Fingerprint do
   Default fingerprints.
   """
 
-  alias LoggerSentry.Fingerprint.MatchMessage
-
   @doc """
   Fetch the default fingerprints.
   """
-  def fingerprints(metadata, msg) do
-    [MatchMessage]
+  def fingerprints(fingerprints_mods, metadata, msg) do
+    fingerprints_mods
+    |> Enum.filter(fn mod -> Code.ensure_loaded?(mod) end)
     |> Enum.map(fn mod -> mod.fingerprints(metadata, msg) end)
     |> Enum.concat()
     |> Enum.uniq()
