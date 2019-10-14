@@ -89,10 +89,6 @@ defmodule Logger.Backends.Sentry do
   end
 
   @doc false
-  def handle_event({_level, gl, _event}, state) when node(gl) != node() do
-    {:ok, state}
-  end
-
   def handle_event({level, _gl, {Logger, msg, _ts, md}}, %{level: log_level} = state) do
     case meet_level?(level, log_level) do
       true -> {:ok, log_event(level, md, msg, state)}
