@@ -36,8 +36,8 @@ defmodule Logger.Backends.Sentry do
   Set the backend log level.
   """
   @spec level(:debug | :info | :warn | :error) :: :ok | :error_level
-  def level(level) when level in @level_list do
-    :gen_event.call(Logger, __MODULE__, {:level, level})
+  def level(log_level) when log_level in @level_list do
+    :gen_event.call(Logger, __MODULE__, {:level, log_level})
   end
 
   def level(_), do: :error_level
@@ -76,8 +76,8 @@ defmodule Logger.Backends.Sentry do
     {:ok, state.level, state}
   end
 
-  def handle_call({:level, level}, state) do
-    {:ok, :ok, %{state | level: level}}
+  def handle_call({:level, log_level}, state) do
+    {:ok, :ok, %{state | level: log_level}}
   end
 
   def handle_call(:metadata, state) do
@@ -89,9 +89,9 @@ defmodule Logger.Backends.Sentry do
   end
 
   @doc false
-  def handle_event({level, _gl, {Logger, msg, _ts, md}}, %{level: log_level} = state) do
-    case meet_level?(level, log_level) do
-      true -> {:ok, log_event(level, md, msg, state)}
+  def handle_event({log_level, _gl, {Logger, msg, _ts, md}}, %{level: status_log_level} = state) do
+    case meet_level?(log_level, status_log_level) do
+      true -> {:ok, log_event(log_level, md, msg, state)}
       _ -> {:ok, state}
     end
   end
@@ -132,14 +132,14 @@ defmodule Logger.Backends.Sentry do
   defp configure_metadata(meta_data), do: Enum.reverse(meta_data)
 
   @doc false
-  defp meet_level?(_lvl, nil), do: true
-  defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
+  defp meet_level?(_log_level, nil), do: true
+  defp meet_level?(log_level, min), do: Logger.compare_levels(log_level, min) != :lt
 
   if Mix.env() in [:test] do
-    defp log_event(level, _md, msg, state) do
+    defp log_event(log_level, _md, msg, state) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
         :undefined -> :ignore
-        _ -> :ets.insert(:__just_prepare_for_logger_sentry__, {level, msg})
+        _ -> :ets.insert(:__just_prepare_for_logger_sentry__, {log_level, msg})
       end
 
       state
@@ -147,7 +147,7 @@ defmodule Logger.Backends.Sentry do
   else
     @doc false
     defp normalize_level(:warn), do: "warning"
-    defp normalize_level(level), do: to_string(level)
+    defp normalize_level(log_level), do: to_string(log_level)
 
     defp log_event(:error, md, msg, state) do
       {output, meta_data} = LoggerSentry.Sentry.generate_output(:error, md, msg)
@@ -155,9 +155,9 @@ defmodule Logger.Backends.Sentry do
       state
     end
 
-    defp log_event(level, md, msg, state) do
-      meta_data = [{:level, normalize_level(level)} | md]
-      {output, meta_data} = LoggerSentry.Sentry.generate_output(level, meta_data, msg)
+    defp log_event(log_level, md, msg, state) do
+      meta_data = [{:level, normalize_level(log_level)} | md]
+      {output, meta_data} = LoggerSentry.Sentry.generate_output(log_level, meta_data, msg)
       Sentry.capture_message(output, LoggerSentry.Sentry.generate_opts(meta_data, msg))
       state
     end
