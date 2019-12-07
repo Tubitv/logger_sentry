@@ -90,10 +90,13 @@ defmodule Logger.Backends.Sentry do
 
   @doc false
   def handle_event({log_level, _gl, {Logger, msg, _ts, md}}, %{level: status_log_level} = state) do
-    case meet_level?(log_level, status_log_level) do
-      true -> {:ok, log_event(log_level, md, msg, state)}
-      _ -> {:ok, state}
-    end
+    with true <- meet_level?(log_level, status_log_level),
+         false <- sentry_skip?(md),
+         {output, meta_data} <- generate_outputs(log_level, md, msg),
+         options <- LoggerSentry.Sentry.generate_opts(meta_data, msg),
+         do: send_sentry_log(log_level, output, options)
+
+    {:ok, state}
   end
 
   def handle_event(_, state) do
@@ -135,31 +138,46 @@ defmodule Logger.Backends.Sentry do
   defp meet_level?(_log_level, nil), do: true
   defp meet_level?(log_level, min), do: Logger.compare_levels(log_level, min) != :lt
 
-  if Mix.env() in [:test] do
-    defp log_event(log_level, _md, msg, state) do
-      case :ets.info(:__just_prepare_for_logger_sentry__) do
-        :undefined -> :ignore
-        _ -> :ets.insert(:__just_prepare_for_logger_sentry__, {log_level, msg})
-      end
+  @doc false
+  defp normalize_level(:warn), do: "warning"
+  defp normalize_level(log_level), do: to_string(log_level)
 
-      state
+  defp sentry_skip?(md) do
+    md
+    |> Keyword.get(:metadata, [])
+    |> Keyword.get(:skip_sentry, false)
+  end
+
+  defp generate_outputs(log_level, md, msg) do
+    case log_level do
+      :error ->
+        LoggerSentry.Sentry.generate_output(:error, md, msg)
+
+      _other ->
+        meta_data = [{:level, normalize_level(log_level)} | md]
+        LoggerSentry.Sentry.generate_output(log_level, meta_data, msg)
+    end
+  end
+
+  if Mix.env() in [:test] do
+    defp send_sentry_log(log_level, _output, options) do
+      case :ets.info(:__just_prepare_for_logger_sentry__) do
+        :undefined ->
+          :ignore
+
+        _ ->
+          extra = Keyword.get(options, :extra)
+          :ets.insert(:__just_prepare_for_logger_sentry__, {log_level, extra[:log_message]})
+      end
     end
   else
-    @doc false
-    defp normalize_level(:warn), do: "warning"
-    defp normalize_level(log_level), do: to_string(log_level)
+    defp send_sentry_log(log_level, output, options) do
+      case log_level do
+        :error -> Sentry.capture_exception(output, options)
+        _other -> Sentry.capture_message(output, options)
+      end
 
-    defp log_event(:error, md, msg, state) do
-      {output, meta_data} = LoggerSentry.Sentry.generate_output(:error, md, msg)
-      Sentry.capture_exception(output, LoggerSentry.Sentry.generate_opts(meta_data, msg))
-      state
-    end
-
-    defp log_event(log_level, md, msg, state) do
-      meta_data = [{:level, normalize_level(log_level)} | md]
-      {output, meta_data} = LoggerSentry.Sentry.generate_output(log_level, meta_data, msg)
-      Sentry.capture_message(output, LoggerSentry.Sentry.generate_opts(meta_data, msg))
-      state
+      :ok
     end
   end
 

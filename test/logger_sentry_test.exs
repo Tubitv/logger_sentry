@@ -41,6 +41,20 @@ defmodule LoggerSentryTest do
     assert :ok == wait_for_ets(10, {:warn, "warn_message"})
   end
 
+  test "sentry log with skip_sentry" do
+    assert :ok == LoggerSentry.level(:debug)
+
+    for {f, msg} <- [
+          {:debug, "debug_message"},
+          {:info, "info_message"},
+          {:warn, "warn_message"},
+          {:error, "error_message"}
+        ] do
+      :erlang.apply(Logger, :bare_log, [f, msg, [metadata: [skip_sentry: true]]])
+      assert catch_exit(wait_for_ets(2, {f, msg})) == "wait_for_ets timeout"
+    end
+  end
+
   test "sentry metadata" do
     assert [] == LoggerSentry.metadata()
     assert :error_metadata == LoggerSentry.metadata(:fake_meta)
