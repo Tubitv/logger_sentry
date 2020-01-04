@@ -91,7 +91,7 @@ defmodule Logger.Backends.Sentry do
   @doc false
   def handle_event({log_level, _gl, {Logger, msg, _ts, md}}, %{level: status_log_level} = state) do
     with true <- meet_level?(log_level, status_log_level),
-         false <- sentry_skip?(md),
+         false <- skip_sentry?(md),
          {output, meta_data} <- generate_outputs(log_level, md, msg),
          options <- LoggerSentry.Sentry.generate_opts(meta_data, msg),
          do: send_sentry_log(log_level, output, options)
@@ -142,7 +142,7 @@ defmodule Logger.Backends.Sentry do
   defp normalize_level(:warn), do: "warning"
   defp normalize_level(log_level), do: to_string(log_level)
 
-  defp sentry_skip?(md) do
+  defp skip_sentry?(md) do
     md
     |> Keyword.get(:metadata, [])
     |> Keyword.get(:skip_sentry, false)
