@@ -50,7 +50,7 @@ defmodule LoggerSentryTest do
           {:warn, "warn_message"},
           {:error, "error_message"}
         ] do
-      :erlang.apply(Logger, :bare_log, [f, msg, [metadata: [skip_sentry: true]]])
+      :erlang.apply(Logger, :bare_log, [f, msg, [logger_sentry: [skip_sentry: true]]])
       assert catch_exit(wait_for_ets(2, {f, msg})) == "wait_for_ets timeout"
     end
   end

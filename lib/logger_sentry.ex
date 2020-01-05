@@ -20,6 +20,18 @@ defmodule Logger.Backends.Sentry do
   We set the Applicaton configure of `logger`, and add it to `backends` list,
   the set log level as needed. So we could execute Logger interface functions
   as usas, and the sentry backend will push log message to the sentry dashboard.
+
+  ### Supressing Sentry logging
+
+  When you want to suppress Sentry logging for a specific Logger call even if
+  Sentry level is met to the level, pass following option:
+
+    * [logger_sentry: [skip_sentry: boolean]]
+
+  For example, if Sentry level is set to `:error`, and you want to suppress
+  Sentry logging for a specific error logging:
+
+      Logger.error("error msg", [logger_sentry: [skip_sentry: true]])
   """
 
   @level_list [:debug, :info, :warn, :error]
@@ -144,7 +156,7 @@ defmodule Logger.Backends.Sentry do
 
   defp skip_sentry?(md) do
     md
-    |> Keyword.get(:metadata, [])
+    |> Keyword.get(:logger_sentry, [])
     |> Keyword.get(:skip_sentry, false)
   end
 
