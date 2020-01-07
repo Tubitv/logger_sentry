@@ -20,6 +20,18 @@ defmodule Logger.Backends.Sentry do
   We set the Applicaton configure of `logger`, and add it to `backends` list,
   the set log level as needed. So we could execute Logger interface functions
   as usas, and the sentry backend will push log message to the sentry dashboard.
+
+  ### Supressing Sentry logging
+
+  When you want to suppress Sentry logging for a specific Logger call even if
+  Sentry level is met to the level, pass following option:
+
+    * [logger_sentry: [skip_sentry: boolean]]
+
+  For example, if Sentry level is set to `:error`, and you want to suppress
+  Sentry logging for a specific error logging:
+
+      Logger.error("error msg", [logger_sentry: [skip_sentry: true]])
   """
 
   @level_list [:debug, :info, :warn, :error]
@@ -36,8 +48,8 @@ defmodule Logger.Backends.Sentry do
   Set the backend log level.
   """
   @spec level(:debug | :info | :warn | :error) :: :ok | :error_level
-  def level(level) when level in @level_list do
-    :gen_event.call(Logger, __MODULE__, {:level, level})
+  def level(log_level) when log_level in @level_list do
+    :gen_event.call(Logger, __MODULE__, {:level, log_level})
   end
 
   def level(_), do: :error_level
@@ -56,9 +68,9 @@ defmodule Logger.Backends.Sentry do
     :gen_event.call(Logger, __MODULE__, {:metadata, :all})
   end
 
-  def metadata(metadata) when is_list(metadata) do
-    case Enum.all?(metadata, fn i -> Enum.member?(@metadata_list, i) end) do
-      true -> :gen_event.call(Logger, __MODULE__, {:metadata, metadata})
+  def metadata(meta_data) when is_list(meta_data) do
+    case Enum.all?(meta_data, fn i -> Enum.member?(@metadata_list, i) end) do
+      true -> :gen_event.call(Logger, __MODULE__, {:metadata, meta_data})
       false -> :error_metadata
     end
   end
@@ -76,24 +88,27 @@ defmodule Logger.Backends.Sentry do
     {:ok, state.level, state}
   end
 
-  def handle_call({:level, level}, state) do
-    {:ok, :ok, %{state | level: level}}
+  def handle_call({:level, log_level}, state) do
+    {:ok, :ok, %{state | level: log_level}}
   end
 
   def handle_call(:metadata, state) do
     {:ok, state.metadata, state}
   end
 
-  def handle_call({:metadata, metadata}, state) do
-    {:ok, :ok, %{state | metadata: metadata}}
+  def handle_call({:metadata, meta_data}, state) do
+    {:ok, :ok, %{state | metadata: meta_data}}
   end
 
   @doc false
-  def handle_event({level, _gl, {Logger, msg, _ts, md}}, %{level: log_level} = state) do
-    case meet_level?(level, log_level) do
-      true -> {:ok, log_event(level, md, msg, state)}
-      _ -> {:ok, state}
-    end
+  def handle_event({log_level, _gl, {Logger, msg, _ts, md}}, %{level: status_log_level} = state) do
+    with true <- meet_level?(log_level, status_log_level),
+         false <- skip_sentry?(md),
+         {output, meta_data} <- generate_outputs(log_level, md, msg),
+         options <- LoggerSentry.Sentry.generate_opts(meta_data, msg),
+         do: send_sentry_log(log_level, output, options)
+
+    {:ok, state}
   end
 
   def handle_event(_, state) do
@@ -117,49 +132,64 @@ defmodule Logger.Backends.Sentry do
 
   @doc false
   defp init(config, state) do
-    metadata =
+    meta_data =
       config
       |> Keyword.get(:metadata, [])
       |> configure_metadata()
 
     state
-    |> Map.put(:metadata, metadata)
+    |> Map.put(:metadata, meta_data)
     |> Map.put(:level, Keyword.get(config, :level, :info))
   end
 
   @doc false
   defp configure_metadata(:all), do: :all
-  defp configure_metadata(metadata), do: Enum.reverse(metadata)
+  defp configure_metadata(meta_data), do: Enum.reverse(meta_data)
 
   @doc false
-  defp meet_level?(_lvl, nil), do: true
-  defp meet_level?(lvl, min), do: Logger.compare_levels(lvl, min) != :lt
+  defp meet_level?(_log_level, nil), do: true
+  defp meet_level?(log_level, min), do: Logger.compare_levels(log_level, min) != :lt
+
+  @doc false
+  defp normalize_level(:warn), do: "warning"
+  defp normalize_level(log_level), do: to_string(log_level)
+
+  defp skip_sentry?(md) do
+    md
+    |> Keyword.get(:logger_sentry, [])
+    |> Keyword.get(:skip_sentry, false)
+  end
+
+  defp generate_outputs(log_level, md, msg) do
+    case log_level do
+      :error ->
+        LoggerSentry.Sentry.generate_output(:error, md, msg)
+
+      _other ->
+        meta_data = [{:level, normalize_level(log_level)} | md]
+        LoggerSentry.Sentry.generate_output(log_level, meta_data, msg)
+    end
+  end
 
   if Mix.env() in [:test] do
-    defp log_event(level, _metadata, msg, state) do
+    defp send_sentry_log(log_level, _output, options) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
-        :undefined -> :ignore
-        _ -> :ets.insert(:__just_prepare_for_logger_sentry__, {level, msg})
-      end
+        :undefined ->
+          :ignore
 
-      state
+        _ ->
+          extra = Keyword.get(options, :extra)
+          :ets.insert(:__just_prepare_for_logger_sentry__, {log_level, extra[:log_message]})
+      end
     end
   else
-    @doc false
-    defp normalize_level(:warn), do: "warning"
-    defp normalize_level(level), do: to_string(level)
+    defp send_sentry_log(log_level, output, options) do
+      case log_level do
+        :error -> Sentry.capture_exception(output, options)
+        _other -> Sentry.capture_message(output, options)
+      end
 
-    defp log_event(:error, metadata, msg, state) do
-      {output, metadata} = LoggerSentry.Sentry.generate_output(:error, metadata, msg)
-      Sentry.capture_exception(output, LoggerSentry.Sentry.generate_opts(metadata, msg))
-      state
-    end
-
-    defp log_event(level, metadata0, msg, state) do
-      metadata = [{:level, normalize_level(level)} | metadata0]
-      {output, metadata} = LoggerSentry.Sentry.generate_output(level, metadata, msg)
-      Sentry.capture_message(output, LoggerSentry.Sentry.generate_opts(metadata, msg))
-      state
+      :ok
     end
   end
 
