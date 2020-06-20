@@ -183,12 +183,12 @@ defmodule Logger.Backends.Sentry do
       end
     end
   else
-    defp send_sentry_log(log_level, output, options) do
-      case log_level do
-        :error -> Sentry.capture_exception(output, options)
-        _other -> Sentry.capture_message(output, options)
-      end
-
+    defp send_sentry_log(_log_level, %ErlangError{original: original}, options) do
+      Sentry.capture_message(original, options)
+      :ok
+    end
+    defp send_sentry_log(_log_level, output, options) do
+      Sentry.capture_message(output, options)
       :ok
     end
   end
