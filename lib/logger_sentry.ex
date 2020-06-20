@@ -104,9 +104,8 @@ defmodule Logger.Backends.Sentry do
   def handle_event({log_level, _gl, {Logger, msg, _ts, md}}, %{level: status_log_level} = state) do
     with true <- meet_level?(log_level, status_log_level),
          false <- skip_sentry?(md),
-         {output, meta_data} <- generate_outputs(log_level, md, msg),
-         options <- LoggerSentry.Sentry.generate_opts(meta_data, msg),
-         do: send_sentry_log(log_level, output, options)
+         options <- LoggerSentry.Sentry.generate_opts(md, msg),
+         do: send_sentry_log(log_level, msg, options)
 
     {:ok, state}
   end
@@ -150,28 +149,13 @@ defmodule Logger.Backends.Sentry do
   defp meet_level?(_log_level, nil), do: true
   defp meet_level?(log_level, min), do: Logger.compare_levels(log_level, min) != :lt
 
-  @doc false
-  defp normalize_level(:warn), do: "warning"
-  defp normalize_level(log_level), do: to_string(log_level)
-
   defp skip_sentry?(md) do
     md
     |> Keyword.get(:logger_sentry, [])
     |> Keyword.get(:skip_sentry, false)
   end
 
-  defp generate_outputs(log_level, md, msg) do
-    case log_level do
-      :error ->
-        LoggerSentry.Sentry.generate_output(:error, md, msg)
-
-      _other ->
-        meta_data = [{:level, normalize_level(log_level)} | md]
-        LoggerSentry.Sentry.generate_output(log_level, meta_data, msg)
-    end
-  end
-
-  if Mix.env() in [:test] do
+  if Mix.env() == :test do
     defp send_sentry_log(log_level, _output, options) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
         :undefined ->
@@ -183,10 +167,6 @@ defmodule Logger.Backends.Sentry do
       end
     end
   else
-    defp send_sentry_log(_log_level, %ErlangError{original: original}, options) do
-      Sentry.capture_message(original, options)
-      :ok
-    end
     defp send_sentry_log(_log_level, output, options) do
       Sentry.capture_message(output, options)
       :ok

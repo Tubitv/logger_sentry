@@ -1,36 +1,7 @@
 defmodule LoggerSentry.Sentry do
   @moduledoc """
-  Generate output and options for sentry.
+  Generate options for sentry.
   """
-
-  @doc """
-  Generate output.
-  """
-  @spec generate_output(atom, Keyword.t(), list()) :: {Exception.t(), Keyword.t()}
-  def generate_output(level, metadata, message) do
-    case Keyword.get(metadata, :crash_reason) do
-      {reason, stacktrace} -> {reason, Keyword.put(metadata, :stacktrace, stacktrace)}
-      _ -> generate_output_without_crash_reason(level, metadata, message)
-    end
-  end
-
-  @doc false
-  defp generate_output_without_crash_reason(level, metadata, message) do
-    case Keyword.get(metadata, :exception) do
-      nil ->
-        {output, _} =
-          Exception.blame(
-            level,
-            :erlang.iolist_to_binary(message),
-            Keyword.get(metadata, :stacktrace, [])
-          )
-
-        {output, metadata}
-
-      exception ->
-        {exception, metadata}
-    end
-  end
 
   @doc """
   Generate options for sentry.
