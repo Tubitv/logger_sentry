@@ -155,7 +155,7 @@ defmodule Logger.Backends.Sentry do
     |> Keyword.get(:skip_sentry, false)
   end
 
-  if Mix.env() == :test do
+  if Mix.env() in [:test] do
     defp send_sentry_log(log_level, _output, options) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
         :undefined ->
