@@ -13,7 +13,7 @@ The package can be installed as:
 
 ```elixir
 def deps do
-  [{:logger_sentry, "~> 0.1.0"}]
+  [{:logger_sentry, "~> 0.6.0"}]
 end
 ```
 
