@@ -1,70 +1,76 @@
 # LoggerSentry
 
 [![Build Status](https://img.shields.io/travis/Tubitv/logger_sentry.svg?style=flat-square)](https://travis-ci.org/Tubitv/logger_sentry)
-[![Hex.pm Version](https://img.shields.io/hexpm/v/logger_sentry.svg?style=flat-square)](https://hex.pm/packages/logger_sentry)
+[![Module Version](https://img.shields.io/hexpm/v/logger_sentry.svg?style=flat-square)](https://hex.pm/packages/logger_sentry)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg?style=flat-square)](https://hexdocs.pm/logger_sentry/)
+[![Total Download](https://img.shields.io/hexpm/dt/logger_sentry.svg?style=flat-square)](https://hex.pm/packages/logger_sentry)
+[![License](https://img.shields.io/hexpm/l/logger_sentry.svg?style=flat-square)](https://github.com/Tubitv/logger_sentry/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/Tubitv/logger_sentry.svg?style=flat-square)](https://github.com/Tubitv/logger_sentry/commits/master)
 
-The Logger backend for Sentry.
+The `Logger` backend for [Sentry](https://sentry.io).
 
 ## Installation
 
 The package can be installed as:
 
-1. Add `logger_sentry` to your `mix.exs` file
+Add `:logger_sentry` to your `mix.exs` file:
 
 ```elixir
 def deps do
-  [{:logger_sentry, "~> 0.6.0"}]
+  [
+    {:logger_sentry, "~> 0.6.0"}
+  ]
 end
 ```
 
-2. Configure your config file, just like:
+Configure your config file, just like:
 
 ```elixir
 config :logger,
   backends: [:console, Logger.Backends.Sentry],
-  sentry: [level: :error,
-           metadata: [:application, :module, :function, :file, :line, :pid] # :all
-          ]
-
+  sentry: [
+    level: :error,
+    metadata: [:application, :module, :function, :file, :line, :pid] # :all
+  ]
 ```
 
-If you want keep `console` backend in Logger event server, you should set `backends` with `[:console, Logger.Backends.Sentry]`. And sentry backend just support three options:
-
-- level
-- metadata
-
-just like as `console` backend.
+If you want keep `:console` backend in Logger event server, you should set
+`:backends` with `[:console, Logger.Backends.Sentry]`. Just like `:console`
+backend, the sentry backend supports the same `:level` and `:metadata` options.
 
 ## Usage
 
-Just like using Logger.
+Similar to `Logger`.
 
 ```elixir
 Logger.debug("this is one debug message")
 Logger.info("this is one info message")
 Logger.warn("this is one warning message")
-Logger.error("this is one error message, if you set sentry logger level with `error`, the message will sent to your sentry server")
+
+# if you set sentry logger level with `:error`, the message will sent to your
+# sentry server
+Logger.error("this is one error message")
 ```
 
-### get log level
+### Get log level
 
 ```elixir
 Logger.Backends.Sentry.level
 ```
 
-### set log level
+### Set log level
 
 ```elixir
 Logger.Backends.Sentry.level(:error)
 ```
 
-### get metadata
+### Get metadata
 
 ```elixir
 Logger.Backends.Sentry.metadata
 ```
 
-### set metadata
+### Set metadata
 
 ```elixir
 Logger.Backends.Sentry.metadata([])
@@ -72,21 +78,41 @@ Logger.Backends.Sentry.metadata(:all)
 Logger.Backends.Sentry.metadata([:application, :module, :pid])
 ```
 
-## fingerprints
+## Fingerprints
 
-For use fingerprints in sentry dashboard easily, `logger_sentry` support option to define generate fingerprints modules.
-Now only support match error message and code location, and you can also self-define module to generate the fingerprints, just need define `fingerprints/2` function in your self-define module.
-And you need set the option for `logger_sentry` application, just like:
+To use fingerprints in sentry dashboard, set `:logger_sentry` option to define
+generate fingerprints modules:
 
 ```elixir
 config :logger_sentry,
   fingerprints_mods: [
-    LoggerSentry.Fingerprint.MatchMessage, # [code source](./lib/logger_sentry/fingerprint/match_message.ex)
-    LoggerSentry.Fingerprint.CodeLocation, # [code source](./lib/logger_sentry/fingerprint/code_location.ex)
-    Self.Define.Module
+    LoggerSentry.Fingerprint.MatchMessage,
+    LoggerSentry.Fingerprint.CodeLocation,
+    MyApp.Fingerprint.MyModule
   ]
 ```
 
-## Example
+Only match error message, `LoggerSentry.Fingerprint.MatchMessage ` and code
+location, `LoggerSentry.Fingerprint.CodeLocation ` are available by default
+right now.
 
-[use example](https://github.com/Tubitv/logger_sentry/wiki/Use-example)
+You can define your own module, for example, `MyApp.Fingerprint.MyModule`, by
+adding a `fingerprints/2` function.
+
+## Examples
+
+See additional usage examples at [wiki](https://github.com/Tubitv/logger_sentry/wiki/Use-example).
+
+## Copyright and License
+
+Copyright (c) 2017 Taotao Lin
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
