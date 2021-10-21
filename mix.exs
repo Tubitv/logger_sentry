@@ -4,7 +4,7 @@ defmodule LoggerSentry.Mixfile do
   def project do
     [
       app: :logger_sentry,
-      version: "0.6.0",
+      version: "0.6.1",
       elixir: "~> 1.7",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
