@@ -159,7 +159,7 @@ defmodule Logger.Backends.Sentry do
   defp format_message(msg) when is_binary(msg), do: msg
 
   defp format_message(msg) do
-    :erlang.iolist_to_binary(msg)
+    IO.iodata_to_binary(msg)
   end
 
   if Mix.env() in [:test] do
