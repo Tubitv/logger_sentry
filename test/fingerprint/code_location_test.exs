@@ -12,5 +12,10 @@ defmodule LoggerSentry.Fingerprint.CodeLocation.Test do
     assert ["file:1", "line:2"] == CodeLocation.fingerprints([file: 1, line: 2], nil)
   end
 
+  test "crash reason" do
+    assert [msg] = CodeLocation.fingerprints([crash_reason: {:error, nil}], nil)
+    assert msg =~ "error:** (ErlangError) Erlang error: :error"
+  end
+
   # __end_of_module__
 end
