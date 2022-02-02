@@ -1,37 +1,38 @@
 defmodule Logger.Backends.Sentry do
   @moduledoc """
   This module is the sentry backend for Logger and it can handle the event
-  message from the Logger event server and push the log message to the sentry
-  dashboard. This module have a set of interface functions:
+  message from the `Logger` event server and push the log message to the sentry
+  dashboard.
+
+  This module have a set of interface functions:
 
     * get/set the log level
     * get/set the log metadata
 
   ## Config
 
-  config example:
+  Set the configuration for `:logger` as follow and the Sentry backend will
+  push logging messages to the Sentry dashboard.
 
       config :logger,
         backends: [:console, Logger.Backends.File],
-        sentry: [level: :error,
-                 metadata: []
-                ]
+        sentry: [
+          level: :error,
+          metadata: []
+        ]
 
-  We set the Applicaton configure of `logger`, and add it to `backends` list,
-  the set log level as needed. So we could execute Logger interface functions
-  as usas, and the sentry backend will push log message to the sentry dashboard.
-
-  ### Supressing Sentry logging
+  ### Suppressing Sentry logging
 
   When you want to suppress Sentry logging for a specific Logger call even if
   Sentry level is met to the level, pass following option:
 
-    * [logger_sentry: [skip_sentry: boolean]]
+      [logger_sentry: [skip_sentry: boolean]]
 
   For example, if Sentry level is set to `:error`, and you want to suppress
   Sentry logging for a specific error logging:
 
       Logger.error("error msg", [logger_sentry: [skip_sentry: true]])
+
   """
 
   @level_list [:debug, :info, :warn, :error]
