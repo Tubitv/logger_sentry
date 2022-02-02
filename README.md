@@ -103,6 +103,28 @@ adding a `fingerprints/2` function.
 
 See additional usage examples at [wiki](https://github.com/Tubitv/logger_sentry/wiki/Use-example).
 
+## Rate Limiting
+
+Sentry can be configured with a rate limit on the Sentry servers.
+Any messages received faster than that limit will not be processed.
+In order to avoid unnecessary traffic and potentially getting IP-blocked
+by Sentry, it is recommended to add rate limiting on your own servers.
+
+By default, `LoggerSentry` does not enforce rate limits. Rate limiting can be added through your project config files like this:
+
+```
+import Config
+
+config :logger_sentry, LoggerSentry.RateLimiter,
+    rate_limiter_module: LoggerSentry.RateLimiter.TokenBucket,
+    rate_limiter_options: [token_count: 20, interval_ms: 60_000]
+```
+
+`LoggerSentry` comes with a simple token bucket algorithm.
+You may add other rate-limiting algorithms by creating a module that
+conforms to the `LoggerSentry.RateLimiter` module. Then setting
+`rate_limiter_module` to your custom module.
+
 ## Copyright and License
 
 Copyright (c) 2017 Taotao Lin

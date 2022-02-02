@@ -2,7 +2,7 @@ defmodule LoggerSentry.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/Tubitv/logger_sentry"
-  @version "0.6.0"
+  @version "0.7.0"
 
   def project do
     [
@@ -20,7 +20,8 @@ defmodule LoggerSentry.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {LoggerSentry.Application, []}
     ]
   end
 
@@ -29,7 +30,8 @@ defmodule LoggerSentry.Mixfile do
       {:sentry, "~> 7.2"},
       {:jason, "~> 1.1"},
       {:excoveralls, "~> 0.10", only: :test},
-      {:ex_doc, ">= 0.0.0", only: [:dev, :test]}
+      {:ex_doc, ">= 0.0.0", only: [:dev, :test]},
+      {:mimic, "~> 1.5", only: :test}
     ]
   end
 

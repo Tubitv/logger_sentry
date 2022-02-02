@@ -106,6 +106,7 @@ defmodule Logger.Backends.Sentry do
     with true <- meet_level?(log_level, status_log_level),
          false <- skip_sentry?(md),
          options <- LoggerSentry.Sentry.generate_opts(md, msg),
+         msg = format_message(msg),
          do: send_sentry_log(log_level, msg, options)
 
     {:ok, state}
@@ -156,6 +157,12 @@ defmodule Logger.Backends.Sentry do
     |> Keyword.get(:skip_sentry, false)
   end
 
+  defp format_message(msg) when is_binary(msg), do: msg
+
+  defp format_message(msg) do
+    IO.iodata_to_binary(msg)
+  end
+
   if Mix.env() in [:test] do
     defp send_sentry_log(log_level, _output, options) do
       case :ets.info(:__just_prepare_for_logger_sentry__) do
@@ -169,10 +176,7 @@ defmodule Logger.Backends.Sentry do
     end
   else
     defp send_sentry_log(_log_level, output, options) do
-      Sentry.capture_message(output, options)
-      :ok
+      LoggerSentry.RateLimiter.send_rate_limited(output, options)
     end
   end
-
-  # __end_of_module__
 end

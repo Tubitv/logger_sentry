@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 config :logger_sentry,
   fingerprints_mods: [
