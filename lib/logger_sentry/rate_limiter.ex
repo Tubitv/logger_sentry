@@ -61,4 +61,14 @@ defmodule LoggerSentry.RateLimiter do
         {:noreply, new_strategy}
     end
   end
+
+  # Ignore any messages produced from Task.Supervisor.async_nolink via Sentry.
+
+  def handle_info({:DOWN, _ref, _type, _pid, _reason}, state) do
+    {:noreply, state}
+  end
+
+  def handle_info({ref, _result}, state) when is_reference(ref) do
+    {:noreply, state}
+  end
 end
