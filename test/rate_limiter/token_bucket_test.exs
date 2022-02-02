@@ -12,7 +12,7 @@ defmodule LoggerSentry.RateLimiter.TokenBucket.Test do
     {:ok, token_bucket: token_bucket, step_time: step_time}
   end
 
-  test "stop allowing requests when tokens are depeleted", %{token_bucket: token_bucket} do
+  test "stop allowing requests when tokens are depleted", %{token_bucket: token_bucket} do
     assert {:ok, token_bucket} = TokenBucket.check(token_bucket)
     assert {:ok, token_bucket} = TokenBucket.check(token_bucket)
     assert {:ok, token_bucket} = TokenBucket.check(token_bucket)

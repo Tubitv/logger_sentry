@@ -1,7 +1,7 @@
 defmodule LoggerSentry.RateLimiter.Strategy do
   @moduledoc """
   A struct holding common data for rate-limiting strategies.
-  The `module` must be the name of module that conforms to the
+  The `module` must be the name of a module that conforms to the
   `LoggerSentry.RateLimiter` behaviour. The `state` may be used
   however the module sees fit.
   """

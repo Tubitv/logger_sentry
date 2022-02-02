@@ -4,7 +4,7 @@ defmodule LoggerSentry.RateLimiter.TokenBucket do
   Essentially, in some time period (ex. one minute), there are
   X number of tokens available. One request consumes one token.
   If no tokens, then no more requests may run. After the time 
-  interval has elapsed, the token count is restore to max.
+  interval has elapsed, the token count is restored to max.
   """
 
   alias LoggerSentry.RateLimiter.Strategy
