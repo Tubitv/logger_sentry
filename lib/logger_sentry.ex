@@ -175,10 +175,7 @@ defmodule Logger.Backends.Sentry do
     end
   else
     defp send_sentry_log(_log_level, output, options) do
-      Sentry.capture_message(output, options)
-      :ok
+      LoggerSentry.RateLimiter.send_rate_limited(output, options)
     end
   end
-
-  # __end_of_module__
 end
