@@ -175,7 +175,7 @@ defmodule Logger.Backends.Sentry do
     end
   else
     defp send_sentry_log(_log_level, output, options) do
-      LoggerSentry.send_rate_limited(output, options)
+      LoggerSentry.RateLimiter.send_rate_limited(output, options)
     end
   end
 end
