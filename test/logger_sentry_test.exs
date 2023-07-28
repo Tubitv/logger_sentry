@@ -37,8 +37,8 @@ defmodule LoggerSentryTest do
     assert :ok == can_not_wait_for_ets(10)
 
     assert :ok == LoggerSentry.level(:warn)
-    Logger.warn("warn_message")
-    assert :ok == wait_for_ets(10, {:warn, "warn_message"})
+    Logger.warning("warn_message")
+    assert :ok == wait_for_ets(10, {:warning, "warn_message"})
   end
 
   test "sentry log with skip_sentry" do
@@ -47,11 +47,11 @@ defmodule LoggerSentryTest do
     for {f, msg} <- [
           {:debug, "debug_message"},
           {:info, "info_message"},
-          {:warn, "warn_message"},
+          {:warning, "warn_message"},
           {:error, "error_message"}
         ] do
       :erlang.apply(Logger, :bare_log, [f, msg, [logger_sentry: [skip_sentry: true]]])
-      assert catch_exit(wait_for_ets(2, {f, msg})) == "wait_for_ets timeout"
+      assert catch_exit(dbg(wait_for_ets(2, {f, msg}))) == "wait_for_ets timeout"
     end
   end
 

@@ -48,9 +48,10 @@ defmodule Logger.Backends.Sentry do
   @doc """
   Set the backend log level.
   """
-  @spec level(:debug | :info | :warn | :error) :: :ok | :error_level
+  @spec level(:debug | :info | :warning | :error) :: :ok | :error_level
   def level(log_level) when log_level in @level_list do
-    :gen_event.call(Logger, __MODULE__, {:level, log_level})
+    level = translate_level(log_level)
+    :gen_event.call(Logger, __MODULE__, {:level, level})
   end
 
   def level(_), do: :error_level
@@ -90,7 +91,8 @@ defmodule Logger.Backends.Sentry do
   end
 
   def handle_call({:level, log_level}, state) do
-    {:ok, :ok, %{state | level: log_level}}
+    level = translate_level(log_level)
+    {:ok, :ok, %{state | level: level}}
   end
 
   def handle_call(:metadata, state) do
@@ -148,8 +150,18 @@ defmodule Logger.Backends.Sentry do
   defp configure_metadata(meta_data), do: Enum.reverse(meta_data)
 
   @doc false
-  defp meet_level?(_log_level, nil), do: true
-  defp meet_level?(log_level, min), do: Logger.compare_levels(log_level, min) != :lt
+  defp meet_level?(_log_level, nil) do
+    true
+  end
+
+  defp meet_level?(log_level, min) do
+    level = translate_level(log_level)
+    Logger.compare_levels(level, min) != :lt
+  end
+
+  # This is a temporary translation until we migrate to LoggerBackend.
+  defp translate_level(:warn), do: :warning
+  defp translate_level(other), do: other
 
   defp skip_sentry?(md) do
     md
