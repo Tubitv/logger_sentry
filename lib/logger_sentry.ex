@@ -35,14 +35,14 @@ defmodule Logger.Backends.Sentry do
 
   """
 
-  @level_list [:debug, :info, :warn, :error]
+  @level_list [:debug, :info, :warning, :error]
   @metadata_list [:application, :module, :function, :file, :line, :pid]
   defstruct metadata: nil, level: nil, other_config: nil
 
   @doc """
   Get the backend log level.
   """
-  @spec level :: :debug | :info | :warn | :error
+  @spec level :: :debug | :info | :warning | :error
   def level, do: :gen_event.call(Logger, __MODULE__, :level)
 
   @doc """
