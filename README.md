@@ -45,7 +45,7 @@ Similar to `Logger`.
 ```elixir
 Logger.debug("this is one debug message")
 Logger.info("this is one info message")
-Logger.warn("this is one warning message")
+Logger.warning("this is one warning message")
 
 # if you set sentry logger level with `:error`, the message will sent to your
 # sentry server
