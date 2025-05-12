@@ -9,7 +9,7 @@ defmodule LoggerSentry.Fingerprint.CodeLocation.Test do
   end
 
   test "get file and line" do
-    assert ["file:1", "line:2"] == CodeLocation.fingerprints([file: 1, line: 2], nil)
+    assert ["line:2", "file:1"] == CodeLocation.fingerprints([file: 1, line: 2], nil)
   end
 
   test "crash reason" do
