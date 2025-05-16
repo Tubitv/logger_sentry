@@ -18,7 +18,7 @@ Add `:logger_sentry` to your `mix.exs` file:
 ```elixir
 def deps do
   [
-    {:logger_sentry, "~> 0.6.0"}
+    {:logger_sentry, "~> 0.8.0"}
   ]
 end
 ```
