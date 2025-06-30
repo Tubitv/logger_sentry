@@ -8,7 +8,6 @@ defmodule LoggerSentry.Application do
     rate_limit_options = Application.get_env(:logger_sentry, LoggerSentry.RateLimiter, [])
 
     children = [
-      {Task.Supervisor, name: LoggerSentry.TaskSupervisor},
       {LoggerSentry.RateLimiter, rate_limit_options}
     ]
 
