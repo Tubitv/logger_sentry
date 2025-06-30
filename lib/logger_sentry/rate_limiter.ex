@@ -30,6 +30,8 @@ defmodule LoggerSentry.RateLimiter do
 
   use GenServer
 
+  require Logger
+
   @name __MODULE__
 
   def start_link(opts) do
@@ -59,7 +61,7 @@ defmodule LoggerSentry.RateLimiter do
         try do
           Sentry.capture_message(output, options)
         rescue
-          _ -> :ok
+          error -> Logger.error("Failed to capture message: #{Exception.message(error)}")
         end
 
         {:noreply, new_strategy}

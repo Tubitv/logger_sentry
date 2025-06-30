@@ -84,10 +84,9 @@ defmodule LoggerSentry.RateLimiter.Test do
     opts = [unexpected: "option"]
     stub(Sentry, :capture_message, fn _, _ -> raise "error" end)
 
-    assert "" =
-             capture_log(fn ->
-               assert :ok = RateLimiter.send_rate_limited(pid, "message", opts)
-               Process.sleep(100)
-             end)
+    assert capture_log(fn ->
+             assert :ok = RateLimiter.send_rate_limited(pid, "message", opts)
+             Process.sleep(100)
+           end) =~ "Failed to capture message: error"
   end
 end
