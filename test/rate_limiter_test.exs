@@ -2,6 +2,8 @@ defmodule LoggerSentry.RateLimiter.Test do
   use ExUnit.Case, async: false
   use Mimic
 
+  import ExUnit.CaptureLog
+
   alias LoggerSentry.RateLimiter
   alias LoggerSentry.RateLimiter.{NoLimit, TokenBucket}
 
@@ -75,5 +77,16 @@ defmodule LoggerSentry.RateLimiter.Test do
         assert_receive ^msg
       end
     end
+  end
+
+  test "does not crash rate limiter on unexpected options" do
+    pid = start_supervised!({RateLimiter, name: Unexpected})
+    opts = [unexpected: "option"]
+    stub(Sentry, :capture_message, fn _, _ -> raise "error" end)
+
+    assert capture_log(fn ->
+             assert :ok = RateLimiter.send_rate_limited(pid, "message", opts)
+             Process.sleep(100)
+           end) =~ "Failed to capture message: error"
   end
 end

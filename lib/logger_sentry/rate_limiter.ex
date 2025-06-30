@@ -30,6 +30,8 @@ defmodule LoggerSentry.RateLimiter do
 
   use GenServer
 
+  require Logger
+
   @name __MODULE__
 
   def start_link(opts) do
@@ -51,10 +53,17 @@ defmodule LoggerSentry.RateLimiter do
     {:ok, strategy}
   end
 
+  # Invalid options can be passed to Sentry.capture_message/2 which have caused
+  # the GenServer to crash repeatedly and take down the supervision tree.
   def handle_cast({:send_rate_limited, output, options}, strategy) do
     case strategy.module.check(strategy) do
       {:ok, new_strategy} ->
-        Sentry.capture_message(output, options)
+        try do
+          Sentry.capture_message(output, options)
+        rescue
+          error -> Logger.error("Failed to capture message: #{Exception.message(error)}")
+        end
+
         {:noreply, new_strategy}
 
       {:skip, new_strategy} ->
