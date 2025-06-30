@@ -30,6 +30,8 @@ defmodule LoggerSentry.RateLimiter do
 
   use GenServer
 
+  alias LoggerSentry.TaskSupervisor
+
   @name __MODULE__
 
   def start_link(opts) do
@@ -51,10 +53,17 @@ defmodule LoggerSentry.RateLimiter do
     {:ok, strategy}
   end
 
+  # Invalid options can be passed to Sentry.capture_message/2 which have caused
+  # the GenServer to crash repeatedly and take down the supervision tree.
+  # We use a separate task to avoid that and to maintain the current behavior
+  # of the public API.
   def handle_cast({:send_rate_limited, output, options}, strategy) do
     case strategy.module.check(strategy) do
       {:ok, new_strategy} ->
-        Sentry.capture_message(output, options)
+        Task.Supervisor.async_nolink(TaskSupervisor, fn ->
+          Sentry.capture_message(output, options)
+        end)
+
         {:noreply, new_strategy}
 
       {:skip, new_strategy} ->
